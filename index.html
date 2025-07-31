@@ -6,6 +6,10 @@
     <title>AF TECNOCENTER - Herramientas Internas</title>
     <!-- PDF.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
         * {
             margin: 0;
@@ -14,76 +18,209 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
             min-height: 100vh;
-            color: #333;
+            color: #f8fafc;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+        .bg-animated {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .bg-circle-1 {
+            top: -10rem;
+            right: -10rem;
+            width: 20rem;
+            height: 20rem;
+            background: rgba(16, 185, 129, 0.1);
+            animation-delay: 0s;
+        }
+
+        .bg-circle-2 {
+            bottom: -10rem;
+            left: -10rem;
+            width: 20rem;
+            height: 20rem;
+            background: rgba(5, 150, 105, 0.1);
+            animation-delay: 2s;
+        }
+
+        .bg-circle-3 {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24rem;
+            height: 24rem;
+            background: rgba(6, 182, 212, 0.05);
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        .glass {
+            backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .glass-card {
+            backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-
-        .tools-nav {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 40px;
-            flex-wrap: wrap;
-        }
-
-        .tool-btn {
-            background: white;
             border: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            font-size: 1rem;
+            padding: 12px 24px;
+            border-radius: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            min-width: 200px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
         }
 
-        .tool-btn:hover {
+        .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
         }
 
-        .tool-btn.active {
-            background: #4CAF50;
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
             color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
         }
 
-        .tool-content {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            display: none;
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
 
-        .tool-content.active {
-            display: block;
+        .btn-secondary.active {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .upload-area:hover {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            transform: scale(1.02);
+        }
+
+        .results-table {
+            backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .results-table th {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 16px;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .results-table td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .results-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .summary-card {
+            backdrop-filter: blur(16px);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(16, 185, 129, 0.2);
+            border-top: 4px solid #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 12px;
+            margin: 16px 0;
+            backdrop-filter: blur(8px);
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
             animation: fadeIn 0.5s ease;
         }
 
@@ -92,317 +229,206 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .upload-area {
-            border: 3px dashed #ddd;
-            border-radius: 15px;
-            padding: 40px;
-            text-align: center;
-            margin-bottom: 30px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .upload-area:hover {
-            border-color: #4CAF50;
-            background: #f8fff8;
-        }
-
-        .upload-area.dragover {
-            border-color: #4CAF50;
-            background: #f0fff0;
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        .btn {
-            background: linear-gradient(45deg, #4CAF50, #45a049);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 25px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 10px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
-        }
-
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .results-section {
-            margin-top: 30px;
-            display: none;
-        }
-
-        .results-section.show {
-            display: block;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        th {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            font-weight: 600;
-        }
-
-        tr:hover {
-            background: #f8f9ff;
-        }
-
-        .price {
-            font-weight: 600;
-            color: #4CAF50;
-        }
-
-        .discount {
-            color: #ff6b6b;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #4CAF50;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .summary-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        .summary-card h3 {
-            font-size: 2rem;
-            margin-bottom: 5px;
-        }
-
-        .summary-card p {
-            opacity: 0.9;
-        }
-
-        .error-message {
-            background: #ffebee;
-            color: #c62828;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border-left: 4px solid #c62828;
-            display: none;
-        }
-
-        .success-message {
-            background: #e8f5e8;
-            color: #2e7d32;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border-left: 4px solid #2e7d32;
-            display: none;
-        }
+        .hidden { display: none; }
+        .show { display: block; }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .tool-content {
-                padding: 20px;
-            }
-            
-            .tools-nav {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .tool-btn {
-                width: 100%;
-                max-width: 300px;
-            }
+            .upload-area { padding: 2rem 1rem; }
+            .summary-card { padding: 16px; }
+            .results-table th, .results-table td { padding: 12px 8px; font-size: 14px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🔧 AF TECNOCENTER</h1>
-            <p>Herramientas Internas para Optimizar Procesos</p>
+    <!-- Animated Background -->
+    <div class="bg-animated">
+        <div class="bg-circle bg-circle-1"></div>
+        <div class="bg-circle bg-circle-2"></div>
+        <div class="bg-circle bg-circle-3"></div>
+    </div>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <div class="flex items-center justify-center gap-4 mb-6">
+                <div class="w-16 h-16 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <span class="text-3xl">🔧</span>
+                </div>
+                <h1 class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+                    AF TECNOCENTER
+                </h1>
+            </div>
+            <p class="text-xl text-slate-300 max-w-2xl mx-auto">Herramientas Internas para Optimizar Procesos</p>
         </div>
 
-        <div class="tools-nav">
-            <button class="tool-btn active" onclick="showTool('price-calculator')">
-                📊 Calculadora de Precios
+        <!-- Navigation -->
+        <div class="flex flex-wrap justify-center gap-4 mb-12">
+            <button class="btn-secondary active" onclick="showTool('price-calculator')">
+                <i data-lucide="bar-chart-3" class="w-5 h-5 mr-2"></i>
+                Calculadora de Precios
             </button>
-            <button class="tool-btn" onclick="showTool('inventory')">
-                📦 Gestión de Inventario
+            <button class="btn-secondary" onclick="showTool('inventory')">
+                <i data-lucide="package" class="w-5 h-5 mr-2"></i>
+                Gestión de Inventario
             </button>
-            <button class="tool-btn" onclick="showTool('reports')">
-                📈 Reportes
+            <button class="btn-secondary" onclick="showTool('reports')">
+                <i data-lucide="trending-up" class="w-5 h-5 mr-2"></i>
+                Reportes
             </button>
-            <button class="tool-btn" onclick="showTool('clients')">
-                👥 Gestión de Clientes
+            <button class="btn-secondary" onclick="showTool('clients')">
+                <i data-lucide="users" class="w-5 h-5 mr-2"></i>
+                Gestión de Clientes
             </button>
         </div>
 
-        <!-- Calculadora de Precios -->
-        <div id="price-calculator" class="tool-content active">
-            <h2>📊 Calculadora de Precios</h2>
-            <p>Sube una factura y obtén automáticamente los precios con márgenes calculados</p>
-            
-            <div class="upload-area" onclick="document.getElementById('invoiceFile').click()">
-                <div style="font-size: 3rem; margin-bottom: 20px;">📄</div>
-                <h3>Arrastra tu factura aquí o haz clic para seleccionar</h3>
-                <p>Formatos soportados: <strong>PDF</strong>, TXT, Imágenes, Word</p>
-                <p><small>✨ ¡Ahora procesamos PDFs automáticamente!</small></p>
-                <input type="file" id="invoiceFile" class="file-input" accept=".pdf,.txt,.jpg,.jpeg,.png,.doc,.docx" onchange="processInvoice(this.files[0])">
-            </div>
+        <!-- Messages -->
+        <div id="messageContainer"></div>
 
-            <div class="error-message" id="errorMessage"></div>
-            <div class="success-message" id="successMessage"></div>
-
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p>Procesando factura...</p>
-            </div>
-
-            <div class="results-section" id="resultsSection">
-                <div class="summary-cards" id="summaryCards"></div>
-                
-                <div style="margin-bottom: 20px;">
-                    <button class="btn" onclick="exportToExcel()">📥 Descargar Excel</button>
-                    <button class="btn" onclick="printResults()">🖨️ Imprimir</button>
+        <!-- Price Calculator Tool -->
+        <div id="price-calculator" class="tool-content">
+            <div class="glass-card rounded-2xl p-8 shadow-2xl">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+                        <i data-lucide="bar-chart-3" class="w-8 h-8 text-emerald-400"></i>
+                        Calculadora de Precios
+                    </h2>
+                    <p class="text-slate-300">Sube una factura y obtén automáticamente los precios con márgenes calculados</p>
                 </div>
 
-                <table id="resultsTable">
-                    <thead>
-                        <tr>
-                            <th>Producto</th>
-                            <th>Cantidad</th>
-                            <th>Precio Original</th>
-                            <th>Descuento</th>
-                            <th>Precio con Descuento</th>
-                            <th>Precio Venta (Redondeado)</th>
-                            <th>Precio Venta +30%</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultsBody"></tbody>
-                </table>
+                <!-- Upload Area -->
+                <div class="upload-area mb-8" onclick="document.getElementById('invoiceFile').click()">
+                    <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center">
+                        <i data-lucide="upload" class="w-10 h-10 text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-white mb-4">Arrastra tu factura aquí o haz clic para seleccionar</h3>
+                    <p class="text-slate-300 mb-2">Formatos soportados: <strong>PDF, TXT, Imágenes, Word</strong></p>
+                    <p class="text-emerald-400">✨ ¡Ahora procesamos PDFs automáticamente!</p>
+                    <input type="file" id="invoiceFile" style="display: none;" accept=".pdf,.txt,.jpg,.jpeg,.png,.doc,.docx" onchange="processInvoice(this.files[0])">
+                </div>
+
+                <!-- Loading -->
+                <div id="loading" class="hidden text-center py-8">
+                    <div class="loading-spinner"></div>
+                    <p class="text-white text-lg">Procesando factura...</p>
+                </div>
+
+                <!-- Results -->
+                <div id="resultsSection" class="hidden">
+                    <!-- Summary Cards -->
+                    <div id="summaryCards" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"></div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex flex-wrap gap-4 mb-8">
+                        <button class="btn-primary" onclick="exportToExcel()">
+                            <i data-lucide="download" class="w-5 h-5 mr-2"></i>
+                            Descargar Excel
+                        </button>
+                        <button class="btn-secondary" onclick="printResults()">
+                            <i data-lucide="printer" class="w-5 h-5 mr-2"></i>
+                            Imprimir
+                        </button>
+                    </div>
+
+                    <!-- Results Table -->
+                    <div class="overflow-x-auto">
+                        <table class="results-table w-full">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Original</th>
+                                    <th>Descuento</th>
+                                    <th>Precio con Descuento</th>
+                                    <th>Precio Venta (Redondeado)</th>
+                                    <th>Precio Venta +30%</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Gestión de Inventario -->
-        <div id="inventory" class="tool-content">
-            <h2>📦 Gestión de Inventario</h2>
-            <p>Próximamente: Control de stock, alertas de inventario bajo, gestión de proveedores</p>
-            <div style="text-align: center; padding: 60px; opacity: 0.6;">
-                <div style="font-size: 5rem; margin-bottom: 20px;">🚧</div>
-                <h3>En Desarrollo</h3>
-                <p>Esta herramienta estará disponible próximamente</p>
+        <!-- Other Tools -->
+        <div id="inventory" class="tool-content hidden">
+            <div class="glass-card rounded-2xl p-12 shadow-2xl text-center">
+                <div class="w-24 h-24 mx-auto mb-6 bg-gradient-to-r from-emerald-400/20 to-emerald-600/20 rounded-full flex items-center justify-center">
+                    <span class="text-5xl">🚧</span>
+                </div>
+                <h3 class="text-3xl font-bold text-white mb-4">En Desarrollo</h3>
+                <p class="text-slate-300 text-lg max-w-md mx-auto">Próximamente: Control de stock, alertas de inventario bajo, gestión de proveedores</p>
             </div>
         </div>
 
-        <!-- Reportes -->
-        <div id="reports" class="tool-content">
-            <h2>📈 Reportes</h2>
-            <p>Próximamente: Análisis de ventas, reportes de rentabilidad, estadísticas de productos</p>
-            <div style="text-align: center; padding: 60px; opacity: 0.6;">
-                <div style="font-size: 5rem; margin-bottom: 20px;">🚧</div>
-                <h3>En Desarrollo</h3>
-                <p>Esta herramienta estará disponible próximamente</p>
+        <div id="reports" class="tool-content hidden">
+            <div class="glass-card rounded-2xl p-12 shadow-2xl text-center">
+                <div class="w-24 h-24 mx-auto mb-6 bg-gradient-to-r from-emerald-400/20 to-emerald-600/20 rounded-full flex items-center justify-center">
+                    <span class="text-5xl">🚧</span>
+                </div>
+                <h3 class="text-3xl font-bold text-white mb-4">En Desarrollo</h3>
+                <p class="text-slate-300 text-lg max-w-md mx-auto">Próximamente: Análisis de ventas, reportes de rentabilidad, estadísticas de productos</p>
             </div>
         </div>
 
-        <!-- Gestión de Clientes -->
-        <div id="clients" class="tool-content">
-            <h2>👥 Gestión de Clientes</h2>
-            <p>Próximamente: Base de datos de clientes, historial de compras, seguimiento de pagos</p>
-            <div style="text-align: center; padding: 60px; opacity: 0.6;">
-                <div style="font-size: 5rem; margin-bottom: 20px;">🚧</div>
-                <h3>En Desarrollo</h3>
-                <p>Esta herramienta estará disponible próximamente</p>
+        <div id="clients" class="tool-content hidden">
+            <div class="glass-card rounded-2xl p-12 shadow-2xl text-center">
+                <div class="w-24 h-24 mx-auto mb-6 bg-gradient-to-r from-emerald-400/20 to-emerald-600/20 rounded-full flex items-center justify-center">
+                    <span class="text-5xl">🚧</span>
+                </div>
+                <h3 class="text-3xl font-bold text-white mb-4">En Desarrollo</h3>
+                <p class="text-slate-300 text-lg max-w-md mx-auto">Próximamente: Base de datos de clientes, historial de compras, seguimiento de pagos</p>
             </div>
         </div>
     </div>
 
     <script>
-        // Configurar PDF.js
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Configure PDF.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         
         let processedData = [];
 
         function showTool(toolId) {
-            // Ocultar todas las herramientas
+            // Hide all tools
             document.querySelectorAll('.tool-content').forEach(content => {
-                content.classList.remove('active');
+                content.classList.add('hidden');
             });
             
-            // Remover clase active de todos los botones
-            document.querySelectorAll('.tool-btn').forEach(btn => {
+            // Remove active class from all buttons
+            document.querySelectorAll('.btn-secondary').forEach(btn => {
                 btn.classList.remove('active');
             });
             
-            // Mostrar la herramienta seleccionada
-            document.getElementById(toolId).classList.add('active');
+            // Show selected tool
+            document.getElementById(toolId).classList.remove('hidden');
+            document.getElementById(toolId).classList.add('fade-in');
             
-            // Activar el botón correspondiente
+            // Activate corresponding button
             event.target.classList.add('active');
+        }
+
+        function showMessage(type, text) {
+            const container = document.getElementById('messageContainer');
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+            const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+            
+            container.innerHTML = `
+                <div class="alert ${alertClass}">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="${icon}" class="w-5 h-5"></i>
+                        <span>${text}</span>
+                    </div>
+                </div>
+            `;
+            
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
         }
 
         // Drag and drop functionality
@@ -426,21 +452,6 @@
             }
         });
 
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            document.getElementById('successMessage').style.display = 'none';
-        }
-
-        function showSuccess(message) {
-            const successDiv = document.getElementById('successMessage');
-            successDiv.textContent = message;
-            successDiv.style.display = 'block';
-            document.getElementById('errorMessage').style.display = 'none';
-        }
-
-        // Función para redondear hacia arriba en múltiplos de 100
         function roundUpToHundred(price) {
             return Math.ceil(price / 100) * 100;
         }
@@ -448,10 +459,8 @@
         function processInvoice(file) {
             if (!file) return;
             
-            document.getElementById('loading').classList.add('show');
-            document.getElementById('resultsSection').classList.remove('show');
-            document.getElementById('errorMessage').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
             
             // Si es PDF, procesarlo con PDF.js
             if (file.type === 'application/pdf') {
@@ -465,148 +474,79 @@
                     const content = e.target.result;
                     parseInvoiceContent(content);
                 } catch (error) {
-                    showError('Error al procesar el archivo: ' + error.message);
-                    document.getElementById('loading').classList.remove('show');
+                    showMessage('error', 'Error al procesar el archivo: ' + error.message);
+                    document.getElementById('loading').classList.add('hidden');
                 }
             };
             
-            // Para archivos de texto
-            if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
-                reader.readAsText(file);
-            } else {
-                // Para otros tipos de archivo, intentar como texto
-                reader.readAsText(file);
-            }
+            reader.readAsText(file);
         }
         
         async function processPDFFile(file) {
             try {
-                showSuccess('Procesando PDF... Esto puede tomar unos segundos.');
+                showMessage('success', 'Procesando PDF... Esto puede tomar unos segundos.');
                 
                 const arrayBuffer = await file.arrayBuffer();
                 const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
                 
                 let fullText = '';
                 
-                // Extraer texto de todas las páginas
                 for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
                     const page = await pdf.getPage(pageNum);
                     const textContent = await page.getTextContent();
-                    
-                    // Combinar todo el texto de la página
                     const pageText = textContent.items.map(item => item.str).join(' ');
                     fullText += pageText + '\n';
                 }
                 
                 if (!fullText.trim()) {
-                    throw new Error('No se pudo extraer texto del PDF. El archivo podría ser una imagen escaneada.');
+                    throw new Error('No se pudo extraer texto del PDF.');
                 }
                 
-                // Procesar el texto extraído
                 parseInvoiceContent(fullText);
                 
             } catch (error) {
                 console.error('Error procesando PDF:', error);
-                
-                if (error.message.includes('imagen escaneada') || error.message.includes('extraer texto')) {
-                    showError('Este PDF parece ser una imagen escaneada. Para mejores resultados:\n1. Usa un PDF con texto seleccionable\n2. O convierte la imagen a texto usando OCR\n3. O copia/pega el texto manualmente');
-                    showTextInputArea();
-                } else {
-                    showError('Error al procesar el PDF: ' + error.message + '\n\nComo alternativa, puedes copiar y pegar el texto del PDF:');
-                    showTextInputArea();
-                }
-                
-                document.getElementById('loading').classList.remove('show');
+                showMessage('error', 'Error al procesar el PDF: ' + error.message);
+                document.getElementById('loading').classList.add('hidden');
             }
-        }
-        
-        function showTextInputArea() {
-            const uploadArea = document.querySelector('.upload-area');
-            uploadArea.innerHTML = `
-                <div style="font-size: 2rem; margin-bottom: 20px;">📝</div>
-                <h3>Pega el contenido de tu factura aquí</h3>
-                <textarea id="invoiceText" style="width: 100%; height: 300px; margin: 20px 0; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-family: monospace;" placeholder="Pega aquí el contenido copiado de tu factura PDF..."></textarea>
-                <button class="btn" onclick="processTextContent()">Procesar Contenido</button>
-                <button class="btn" style="background: #ccc; color: #666;" onclick="resetUploadArea()">Volver a Subir Archivo</button>
-            `;
-        }
-        
-        function processTextContent() {
-            const textContent = document.getElementById('invoiceText').value;
-            if (!textContent.trim()) {
-                showError('Por favor, pega el contenido de la factura en el área de texto.');
-                return;
-            }
-            
-            document.getElementById('loading').classList.add('show');
-            parseInvoiceContent(textContent);
-        }
-        
-        function resetUploadArea() {
-            const uploadArea = document.querySelector('.upload-area');
-            uploadArea.innerHTML = `
-                <div style="font-size: 3rem; margin-bottom: 20px;">📄</div>
-                <h3>Arrastra tu factura aquí o haz clic para seleccionar</h3>
-                <p>Formatos soportados: PDF, TXT, Imágenes, Word</p>
-                <p><small>💡 Para PDFs: copia y pega el texto en un archivo .txt</small></p>
-                <input type="file" id="invoiceFile" class="file-input" accept=".pdf,.txt,.jpg,.jpeg,.png,.doc,.docx" onchange="processInvoice(this.files[0])">
-            `;
-            uploadArea.onclick = () => document.getElementById('invoiceFile').click();
         }
 
         function parseInvoiceContent(content) {
             try {
-                console.log('Contenido a procesar:', content); // Para debugging
-                
                 const lines = content.split('\n');
                 const products = [];
-                
-                // Detectar diferentes formatos de factura
-                let formatDetected = detectInvoiceFormat(content);
-                console.log('Formato detectado:', formatDetected);
                 
                 for (let line of lines) {
                     line = line.trim();
                     if (!line) continue;
                     
-                    // Buscar líneas que contengan productos con el formato de tu factura
                     const product = parseProductLine(line);
                     if (product) {
                         products.push(product);
-                        console.log('Producto encontrado:', product);
                     }
                 }
                 
-                // Si no se encontraron productos con el formato automático, intentar formato manual
                 if (products.length === 0) {
-                    console.log('Intentando formato manual...');
                     const manualProducts = parseManualFormat(content);
                     products.push(...manualProducts);
                 }
                 
                 if (products.length === 0) {
-                    showError('No se encontraron productos en la factura. \n\n🔍 Verifica que el contenido incluya:\n• Códigos de producto (10 dígitos)\n• Nombres de productos\n• Cantidades\n• Precios\n• Porcentajes de descuento\n\n💡 Tip: Si el PDF es una imagen escaneada, es mejor copiar el texto manualmente.');
-                    document.getElementById('loading').classList.remove('show');
-                    
-                    // Mostrar área de texto como alternativa
-                    setTimeout(() => {
-                        showTextInputArea();
-                    }, 3000);
+                    showMessage('error', 'No se encontraron productos en la factura. Verifica que el contenido incluya códigos de producto, nombres, cantidades y precios.');
+                    document.getElementById('loading').classList.add('hidden');
                     return;
                 }
                 
-                // Procesar datos con redondeo
                 processedData = products.map(product => {
                     const priceWithDiscount = product.price * (1 - product.discount / 100);
                     let salePrice20, salePrice30;
                     
-                    // Aplicar margen según el precio
                     if (priceWithDiscount < 3000) {
-                        salePrice20 = roundUpToHundred(priceWithDiscount * 1.30); // 30% para productos <$3000
-                        salePrice30 = roundUpToHundred(priceWithDiscount * 1.30); // Mismo precio
+                        salePrice20 = roundUpToHundred(priceWithDiscount * 1.30);
+                        salePrice30 = roundUpToHundred(priceWithDiscount * 1.30);
                     } else {
-                        salePrice20 = roundUpToHundred(priceWithDiscount * 1.20); // 20% para productos >=$3000
-                        salePrice30 = roundUpToHundred(priceWithDiscount * 1.30); // 30% alternativo
+                        salePrice20 = roundUpToHundred(priceWithDiscount * 1.20);
+                        salePrice30 = roundUpToHundred(priceWithDiscount * 1.30);
                     }
                     
                     return {
@@ -618,52 +558,25 @@
                 });
                 
                 displayResults();
-                showSuccess(`🎉 ¡Factura procesada exitosamente! \n📦 Se encontraron ${products.length} productos\n💰 Precios redondeados hacia arriba en múltiplos de $100\n📊 Márgenes aplicados correctamente`);
+                showMessage('success', `¡Factura procesada exitosamente! Se encontraron ${products.length} productos`);
                 
             } catch (error) {
                 console.error('Error en parseInvoiceContent:', error);
-                showError('Error al analizar la factura: ' + error.message);
+                showMessage('error', 'Error al analizar la factura: ' + error.message);
             } finally {
-                document.getElementById('loading').classList.remove('show');
+                document.getElementById('loading').classList.add('hidden');
             }
         }
-        
-        function detectInvoiceFormat(content) {
-            // Detectar si es el formato de tu factura específica
-            if (content.includes('COMP Nº') && content.includes('AF TECNOCENTER')) {
-                return 'af_tecnocenter';
-            }
-            return 'generic';
-        }
-        
+
         function parseManualFormat(content) {
-            // Parsear el formato específico de tu factura
             const products = [];
             const lines = content.split('\n');
             
-            // También intentar buscar patrones con espacios múltiples o tabulaciones
-            const allText = content.replace(/\s+/g, ' '); // Normalizar espacios
-            const words = allText.split(' ');
-            
-            // Buscar secuencias que empiecen con código de 10 dígitos
-            for (let i = 0; i < words.length; i++) {
-                if (/^\d{10}$/.test(words[i])) {
-                    const productData = extractProductFromWords(words, i);
-                    if (productData) {
-                        products.push(productData);
-                    }
-                }
-            }
-            
-            // También intentar línea por línea
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
-                
-                // Buscar líneas que empiecen con código de producto (10 dígitos)
                 if (/^\d{10}\s+/.test(line)) {
                     const product = parseSpecificFormat(line);
                     if (product) {
-                        // Evitar duplicados
                         const exists = products.some(p => p.code === product.code);
                         if (!exists) {
                             products.push(product);
@@ -675,57 +588,13 @@
             return products;
         }
         
-        function extractProductFromWords(words, startIndex) {
-            try {
-                const code = words[startIndex];
-                
-                // Buscar los números hacia adelante
-                let nameWords = [];
-                let numbers = [];
-                
-                for (let i = startIndex + 1; i < Math.min(startIndex + 20, words.length); i++) {
-                    const word = words[i];
-                    const num = parseFloat(word.replace(/,/g, ''));
-                    
-                    if (!isNaN(num) && word.includes('.')) {
-                        numbers.push(num);
-                        if (numbers.length >= 4) break; // Tenemos cantidad, precio, descuento, total
-                    } else if (!isNaN(parseInt(word)) && numbers.length === 0) {
-                        numbers.push(parseInt(word)); // Cantidad
-                    } else if (numbers.length === 0) {
-                        nameWords.push(word);
-                    }
-                }
-                
-                if (numbers.length >= 4 && nameWords.length > 0) {
-                    const [quantity, price, discount, total] = numbers;
-                    return {
-                        code: code,
-                        name: nameWords.join(' '),
-                        quantity: Math.round(quantity),
-                        price: price,
-                        discount: discount,
-                        total: total
-                    };
-                }
-            } catch (error) {
-                console.error('Error extracting product:', error);
-            }
-            
-            return null;
-        }
-        
         function parseSpecificFormat(line) {
-            // Formato específico: CÓDIGO NOMBRE CANTIDAD PRECIO DESCUENTO TOTAL
-            // Ejemplo: 0000004833 TENSIOMETRO INTELLISENSE 896 30 13,299.00 11.00 355,083.30
-            
             const parts = line.split(/\s+/);
             if (parts.length < 7) return null;
             
             const code = parts[0];
-            let nameEndIndex = parts.length - 5; // Los últimos 5 elementos son: cantidad, precio, %, descuento, total
+            let nameEndIndex = parts.length - 5;
             
-            // Encontrar donde termina el nombre y empiezan los números
             for (let i = 1; i < parts.length - 4; i++) {
                 if (!isNaN(parts[i]) && !isNaN(parts[i + 1])) {
                     nameEndIndex = i;
@@ -743,31 +612,20 @@
                 return null;
             }
             
-            return {
-                code: code,
-                name: name,
-                quantity: quantity,
-                price: price,
-                discount: discount,
-                total: total
-            };
+            return { code, name, quantity, price, discount, total };
         }
 
         function parseProductLine(line) {
-            // Formato específico de AF TECNOCENTER
-            // Ejemplo: 0000004833 TENSIOMETRO INTELLISENSE 896 30 13,299.00 11.00 355,083.30
-            
             if (!/^\d{10}\s+/.test(line)) {
-                return null; // No es una línea de producto válida
+                return null;
             }
             
             const parts = line.split(/\s+/);
             if (parts.length < 7) return null;
             
             const code = parts[0];
-            
-            // Encontrar donde termina el nombre del producto
             let nameEndIndex = -1;
+            
             for (let i = parts.length - 5; i >= 1; i--) {
                 if (isNaN(parts[i])) {
                     nameEndIndex = i + 1;
@@ -783,19 +641,11 @@
             const discount = parseFloat(parts[nameEndIndex + 2]);
             const total = parseFloat(parts[parts.length - 1].replace(/,/g, ''));
             
-            // Validar que los datos sean correctos
             if (isNaN(quantity) || isNaN(price) || isNaN(discount) || !name.trim()) {
                 return null;
             }
             
-            return {
-                code: code,
-                name: name.trim(),
-                quantity: quantity,
-                price: price,
-                discount: discount,
-                total: total
-            };
+            return { code: code, name: name.trim(), quantity, price, discount, total };
         }
 
         function displayResults() {
@@ -809,13 +659,16 @@
             processedData.forEach(product => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td><strong>${product.name}</strong><br><small>Código: ${product.code}</small></td>
-                    <td>${product.quantity}</td>
-                    <td class="price">$${product.price.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
-                    <td class="discount">${product.discount}%</td>
-                    <td class="price">$${product.priceWithDiscount.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
-                    <td class="price">$${product.salePrice20.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
-                    <td class="price">$${product.salePrice30.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                    <td>
+                        <div class="font-semibold text-white">${product.name}</div>
+                        <div class="text-sm text-slate-400">Código: ${product.code}</div>
+                    </td>
+                    <td class="text-white">${product.quantity}</td>
+                    <td class="text-emerald-400 font-semibold">$${product.price.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                    <td class="text-red-400">${product.discount}%</td>
+                    <td class="text-emerald-400 font-semibold">$${product.priceWithDiscount.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                    <td class="text-emerald-400 font-semibold">$${product.salePrice20.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                    <td class="text-emerald-400 font-semibold">$${product.salePrice30.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
                 `;
                 tbody.appendChild(row);
                 
@@ -824,33 +677,34 @@
                 totalWithMargin += product.salePrice20 * product.quantity;
             });
             
-            // Mostrar resumen
+            // Show summary
             const summaryCards = document.getElementById('summaryCards');
             summaryCards.innerHTML = `
                 <div class="summary-card">
-                    <h3>${processedData.length}</h3>
-                    <p>Productos Únicos</p>
+                    <div class="text-3xl font-bold text-white mb-2">${processedData.length}</div>
+                    <div class="text-emerald-300">Productos Únicos</div>
                 </div>
                 <div class="summary-card">
-                    <h3>${totalProducts}</h3>
-                    <p>Cantidad Total</p>
+                    <div class="text-3xl font-bold text-white mb-2">${totalProducts}</div>
+                    <div class="text-emerald-300">Cantidad Total</div>
                 </div>
                 <div class="summary-card">
-                    <h3>$${totalValue.toLocaleString('es-AR')}</h3>
-                    <p>Valor Total</p>
+                    <div class="text-3xl font-bold text-white mb-2">$${totalValue.toLocaleString('es-AR')}</div>
+                    <div class="text-emerald-300">Valor Total</div>
                 </div>
                 <div class="summary-card">
-                    <h3>$${totalWithMargin.toLocaleString('es-AR')}</h3>
-                    <p>Con Margen</p>
+                    <div class="text-3xl font-bold text-white mb-2">$${totalWithMargin.toLocaleString('es-AR')}</div>
+                    <div class="text-emerald-300">Con Margen</div>
                 </div>
             `;
             
-            document.getElementById('resultsSection').classList.add('show');
+            document.getElementById('resultsSection').classList.remove('hidden');
+            document.getElementById('resultsSection').classList.add('fade-in');
         }
 
         function exportToExcel() {
             if (processedData.length === 0) {
-                showError('No hay datos para exportar');
+                showMessage('error', 'No hay datos para exportar');
                 return;
             }
             
@@ -869,12 +723,12 @@
             link.click();
             document.body.removeChild(link);
             
-            showSuccess('¡Archivo Excel descargado exitosamente!');
+            showMessage('success', '¡Archivo Excel descargado exitosamente!');
         }
 
         function printResults() {
             if (processedData.length === 0) {
-                showError('No hay datos para imprimir');
+                showMessage('error', 'No hay datos para imprimir');
                 return;
             }
             
@@ -887,7 +741,7 @@
                         body { font-family: Arial, sans-serif; margin: 20px; }
                         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
                         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background-color: #f2f2f2; }
+                        th { background-color: #10b981; color: white; }
                         .header { text-align: center; margin-bottom: 30px; }
                     </style>
                 </head>
