@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AF TECNOCENTER - Herramientas Internas</title>
+    <!-- PDF.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -307,8 +309,8 @@
             <div class="upload-area" onclick="document.getElementById('invoiceFile').click()">
                 <div style="font-size: 3rem; margin-bottom: 20px;">📄</div>
                 <h3>Arrastra tu factura aquí o haz clic para seleccionar</h3>
-                <p>Formatos soportados: PDF, TXT, Imágenes, Word</p>
-                <p><small>💡 Para PDFs: copia y pega el texto en un archivo .txt</small></p>
+                <p>Formatos soportados: <strong>PDF</strong>, TXT, Imágenes, Word</p>
+                <p><small>✨ ¡Ahora procesamos PDFs automáticamente!</small></p>
                 <input type="file" id="invoiceFile" class="file-input" accept=".pdf,.txt,.jpg,.jpeg,.png,.doc,.docx" onchange="processInvoice(this.files[0])">
             </div>
 
@@ -380,6 +382,9 @@
     </div>
 
     <script>
+        // Configurar PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
         let processedData = [];
 
         function showTool(toolId) {
@@ -448,7 +453,7 @@
             document.getElementById('errorMessage').style.display = 'none';
             document.getElementById('successMessage').style.display = 'none';
             
-            // Si es PDF, intentar procesarlo con una librería
+            // Si es PDF, procesarlo con PDF.js
             if (file.type === 'application/pdf') {
                 processPDFFile(file);
                 return;
@@ -474,13 +479,45 @@
             }
         }
         
-        function processPDFFile(file) {
-            // Para PDFs, mostrar instrucciones al usuario
-            showError('Para procesar PDFs, por favor:\n1. Abre el PDF\n2. Selecciona todo el texto (Ctrl+A)\n3. Copia el texto (Ctrl+C)\n4. Pega el contenido en un nuevo archivo .txt\n5. Sube el archivo .txt aquí');
-            document.getElementById('loading').classList.remove('show');
-            
-            // Alternativa: mostrar área de texto para pegar contenido
-            showTextInputArea();
+        async function processPDFFile(file) {
+            try {
+                showSuccess('Procesando PDF... Esto puede tomar unos segundos.');
+                
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                
+                let fullText = '';
+                
+                // Extraer texto de todas las páginas
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const textContent = await page.getTextContent();
+                    
+                    // Combinar todo el texto de la página
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                }
+                
+                if (!fullText.trim()) {
+                    throw new Error('No se pudo extraer texto del PDF. El archivo podría ser una imagen escaneada.');
+                }
+                
+                // Procesar el texto extraído
+                parseInvoiceContent(fullText);
+                
+            } catch (error) {
+                console.error('Error procesando PDF:', error);
+                
+                if (error.message.includes('imagen escaneada') || error.message.includes('extraer texto')) {
+                    showError('Este PDF parece ser una imagen escaneada. Para mejores resultados:\n1. Usa un PDF con texto seleccionable\n2. O convierte la imagen a texto usando OCR\n3. O copia/pega el texto manualmente');
+                    showTextInputArea();
+                } else {
+                    showError('Error al procesar el PDF: ' + error.message + '\n\nComo alternativa, puedes copiar y pegar el texto del PDF:');
+                    showTextInputArea();
+                }
+                
+                document.getElementById('loading').classList.remove('show');
+            }
         }
         
         function showTextInputArea() {
@@ -519,11 +556,14 @@
 
         function parseInvoiceContent(content) {
             try {
+                console.log('Contenido a procesar:', content); // Para debugging
+                
                 const lines = content.split('\n');
                 const products = [];
                 
                 // Detectar diferentes formatos de factura
                 let formatDetected = detectInvoiceFormat(content);
+                console.log('Formato detectado:', formatDetected);
                 
                 for (let line of lines) {
                     line = line.trim();
@@ -533,18 +573,25 @@
                     const product = parseProductLine(line);
                     if (product) {
                         products.push(product);
+                        console.log('Producto encontrado:', product);
                     }
                 }
                 
                 // Si no se encontraron productos con el formato automático, intentar formato manual
                 if (products.length === 0) {
+                    console.log('Intentando formato manual...');
                     const manualProducts = parseManualFormat(content);
                     products.push(...manualProducts);
                 }
                 
                 if (products.length === 0) {
-                    showError('No se encontraron productos en la factura. Verifica que el contenido incluya la información de productos con formato: Código, Nombre, Cantidad, Precio, Descuento.');
+                    showError('No se encontraron productos en la factura. \n\n🔍 Verifica que el contenido incluya:\n• Códigos de producto (10 dígitos)\n• Nombres de productos\n• Cantidades\n• Precios\n• Porcentajes de descuento\n\n💡 Tip: Si el PDF es una imagen escaneada, es mejor copiar el texto manualmente.');
                     document.getElementById('loading').classList.remove('show');
+                    
+                    // Mostrar área de texto como alternativa
+                    setTimeout(() => {
+                        showTextInputArea();
+                    }, 3000);
                     return;
                 }
                 
@@ -571,9 +618,10 @@
                 });
                 
                 displayResults();
-                showSuccess(`¡Factura procesada exitosamente! Se encontraron ${products.length} productos. Precios redondeados hacia arriba en múltiplos de $100.`);
+                showSuccess(`🎉 ¡Factura procesada exitosamente! \n📦 Se encontraron ${products.length} productos\n💰 Precios redondeados hacia arriba en múltiplos de $100\n📊 Márgenes aplicados correctamente`);
                 
             } catch (error) {
+                console.error('Error en parseInvoiceContent:', error);
                 showError('Error al analizar la factura: ' + error.message);
             } finally {
                 document.getElementById('loading').classList.remove('show');
@@ -593,19 +641,78 @@
             const products = [];
             const lines = content.split('\n');
             
+            // También intentar buscar patrones con espacios múltiples o tabulaciones
+            const allText = content.replace(/\s+/g, ' '); // Normalizar espacios
+            const words = allText.split(' ');
+            
+            // Buscar secuencias que empiecen con código de 10 dígitos
+            for (let i = 0; i < words.length; i++) {
+                if (/^\d{10}$/.test(words[i])) {
+                    const productData = extractProductFromWords(words, i);
+                    if (productData) {
+                        products.push(productData);
+                    }
+                }
+            }
+            
+            // También intentar línea por línea
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
                 
-                // Buscar líneas que empiecen con código de producto (números)
+                // Buscar líneas que empiecen con código de producto (10 dígitos)
                 if (/^\d{10}\s+/.test(line)) {
                     const product = parseSpecificFormat(line);
                     if (product) {
-                        products.push(product);
+                        // Evitar duplicados
+                        const exists = products.some(p => p.code === product.code);
+                        if (!exists) {
+                            products.push(product);
+                        }
                     }
                 }
             }
             
             return products;
+        }
+        
+        function extractProductFromWords(words, startIndex) {
+            try {
+                const code = words[startIndex];
+                
+                // Buscar los números hacia adelante
+                let nameWords = [];
+                let numbers = [];
+                
+                for (let i = startIndex + 1; i < Math.min(startIndex + 20, words.length); i++) {
+                    const word = words[i];
+                    const num = parseFloat(word.replace(/,/g, ''));
+                    
+                    if (!isNaN(num) && word.includes('.')) {
+                        numbers.push(num);
+                        if (numbers.length >= 4) break; // Tenemos cantidad, precio, descuento, total
+                    } else if (!isNaN(parseInt(word)) && numbers.length === 0) {
+                        numbers.push(parseInt(word)); // Cantidad
+                    } else if (numbers.length === 0) {
+                        nameWords.push(word);
+                    }
+                }
+                
+                if (numbers.length >= 4 && nameWords.length > 0) {
+                    const [quantity, price, discount, total] = numbers;
+                    return {
+                        code: code,
+                        name: nameWords.join(' '),
+                        quantity: Math.round(quantity),
+                        price: price,
+                        discount: discount,
+                        total: total
+                    };
+                }
+            } catch (error) {
+                console.error('Error extracting product:', error);
+            }
+            
+            return null;
         }
         
         function parseSpecificFormat(line) {
