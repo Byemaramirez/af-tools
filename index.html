@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AF TECNOCENTER - Herramientas Internas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .tools-nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            background: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-width: 200px;
+        }
+
+        .tool-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .tool-btn.active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .tool-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .tool-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #4CAF50;
+            background: #f8fff8;
+        }
+
+        .upload-area.dragover {
+            border-color: #4CAF50;
+            background: #f0fff0;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .results-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .results-section.show {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9ff;
+        }
+
+        .price {
+            font-weight: 600;
+            color: #4CAF50;
+        }
+
+        .discount {
+            color: #ff6b6b;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .summary-card h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .summary-card p {
+            opacity: 0.9;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #c62828;
+            display: none;
+        }
+
+        .success-message {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #2e7d32;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .tool-content {
+                padding: 20px;
+            }
+            
+            .tools-nav {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .tool-btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 AF TECNOCENTER</h1>
+            <p>Herramientas Internas para Optimizar Procesos</p>
+        </div>
+
+        <div class="tools-nav">
+            <button class="tool-btn active" onclick="showTool('price-calculator')">
+                📊 Calculadora de Precios
+            </button>
+            <button class="tool-btn" onclick="showTool('inventory')">
+                📦 Gestión de Inventario
+            </button>
+            <button class="tool-btn" onclick="showTool('reports')">
+                📈 Reportes
+            </button>
+            <button class="tool-btn" onclick="showTool('clients')">
+                👥 Gestión de Clientes
+            </button>
+        </div>
+
+        <!-- Calculadora de Precios -->
+        <div id="price-calculator" class="tool-content active">
+            <h2>📊 Calculadora de Precios</h2>
+            <p>Sube una factura y obtén automáticamente los precios con márgenes calculados</p>
+            
+            <div class="upload-area" onclick="document.getElementById('invoiceFile').click()">
+                <div style="font-size: 3rem; margin-bottom: 20px;">📄</div>
+                <h3>Arrastra tu factura aquí o haz clic para seleccionar</h3>
+                <p>Formatos soportados: PDF, TXT, Imágenes, Word</p>
+                <p><small>💡 Para PDFs: copia y pega el texto en un archivo .txt</small></p>
+                <input type="file" id="invoiceFile" class="file-input" accept=".pdf,.txt,.jpg,.jpeg,.png,.doc,.docx" onchange="processInvoice(this.files[0])">
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Procesando factura...</p>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <div class="summary-cards" id="summaryCards"></div>
+                
+                <div style="margin-bottom: 20px;">
+                    <button class="btn" onclick="exportToExcel()">📥 Descargar Excel</button>
+                    <button class="btn" onclick="printResults()">🖨️ Imprimir</button>
+                </div>
+
+                <table id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio Original</th>
+                            <th>Descuento</th>
+                            <th>Precio con Descuento</th>
+                            <th>Precio Venta (Redondeado)</th>
+                            <th>Precio Venta +30%</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Gestión de Inventario -->
+        <div id="inventory" class="tool-content">
+            <h2>📦 Gestión de Inventario</h2>
+            <p>Próximamente: Control de stock, alertas de inventario bajo, gestión de proveedores</p>
+            <div style="text-align: center; padding: 60px; opacity: 0.6;">
+                <div style="font-size: 5rem; margin-bottom: 20px;">🚧</div>
+                <h3>En Desarrollo</h3>
+                <p>Esta herramienta estará disponible próximamente</p>
+            </div>
+        </div>
+
+        <!-- Reportes -->
+        <div id="reports" class="tool-content">
+            <h2>📈 Reportes</h2>
+            <p>Próximamente: Análisis de ventas, reportes de rentabilidad, estadísticas de productos</p>
+            <div style="text-align: center; padding: 60px; opacity: 0.6;">
+                <div style="font-size: 5rem; margin-bottom: 20px;">🚧</div>
+                <h3>En Desarrollo</h3>
+                <p>Esta herramienta estará disponible próximamente</p>
+            </div>
+        </div>
+
+        <!-- Gestión de Clientes -->
+        <div id="clients" class="tool-content">
+            <h2>👥 Gestión de Clientes</h2>
+            <p>Próximamente: Base de datos de clientes, historial de compras, seguimiento de pagos</p>
+            <div style="text-align: center; padding: 60px; opacity: 0.6;">
+                <div style="font-size: 5rem; margin-bottom: 20px;">🚧</div>
+                <h3>En Desarrollo</h3>
+                <p>Esta herramienta estará disponible próximamente</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let processedData = [];
+
+        function showTool(toolId) {
+            // Ocultar todas las herramientas
+            document.querySelectorAll('.tool-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remover clase active de todos los botones
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Mostrar la herramienta seleccionada
+            document.getElementById(toolId).classList.add('active');
+            
+            // Activar el botón correspondiente
+            event.target.classList.add('active');
+        }
+
+        // Drag and drop functionality
+        const uploadArea = document.querySelector('.upload-area');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processInvoice(files[0]);
+            }
+        });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // Función para redondear hacia arriba en múltiplos de 100
+        function roundUpToHundred(price) {
+            return Math.ceil(price / 100) * 100;
+        }
+
+        function processInvoice(file) {
+            if (!file) return;
+            
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('resultsSection').classList.remove('show');
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            
+            // Si es PDF, intentar procesarlo con una librería
+            if (file.type === 'application/pdf') {
+                processPDFFile(file);
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    parseInvoiceContent(content);
+                } catch (error) {
+                    showError('Error al procesar el archivo: ' + error.message);
+                    document.getElementById('loading').classList.remove('show');
+                }
+            };
+            
+            // Para archivos de texto
+            if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
+                reader.readAsText(file);
+            } else {
+                // Para otros tipos de archivo, intentar como texto
+                reader.readAsText(file);
+            }
+        }
+        
+        function processPDFFile(file) {
+            // Para PDFs, mostrar instrucciones al usuario
+            showError('Para procesar PDFs, por favor:\n1. Abre el PDF\n2. Selecciona todo el texto (Ctrl+A)\n3. Copia el texto (Ctrl+C)\n4. Pega el contenido en un nuevo archivo .txt\n5. Sube el archivo .txt aquí');
+            document.getElementById('loading').classList.remove('show');
+            
+            // Alternativa: mostrar área de texto para pegar contenido
+            showTextInputArea();
+        }
+        
+        function showTextInputArea() {
+            const uploadArea = document.querySelector('.upload-area');
+            uploadArea.innerHTML = `
+                <div style="font-size: 2rem; margin-bottom: 20px;">📝</div>
+                <h3>Pega el contenido de tu factura aquí</h3>
+                <textarea id="invoiceText" style="width: 100%; height: 300px; margin: 20px 0; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-family: monospace;" placeholder="Pega aquí el contenido copiado de tu factura PDF..."></textarea>
+                <button class="btn" onclick="processTextContent()">Procesar Contenido</button>
+                <button class="btn" style="background: #ccc; color: #666;" onclick="resetUploadArea()">Volver a Subir Archivo</button>
+            `;
+        }
+        
+        function processTextContent() {
+            const textContent = document.getElementById('invoiceText').value;
+            if (!textContent.trim()) {
+                showError('Por favor, pega el contenido de la factura en el área de texto.');
+                return;
+            }
+            
+            document.getElementById('loading').classList.add('show');
+            parseInvoiceContent(textContent);
+        }
+        
+        function resetUploadArea() {
+            const uploadArea = document.querySelector('.upload-area');
+            uploadArea.innerHTML = `
+                <div style="font-size: 3rem; margin-bottom: 20px;">📄</div>
+                <h3>Arrastra tu factura aquí o haz clic para seleccionar</h3>
+                <p>Formatos soportados: PDF, TXT, Imágenes, Word</p>
+                <p><small>💡 Para PDFs: copia y pega el texto en un archivo .txt</small></p>
+                <input type="file" id="invoiceFile" class="file-input" accept=".pdf,.txt,.jpg,.jpeg,.png,.doc,.docx" onchange="processInvoice(this.files[0])">
+            `;
+            uploadArea.onclick = () => document.getElementById('invoiceFile').click();
+        }
+
+        function parseInvoiceContent(content) {
+            try {
+                const lines = content.split('\n');
+                const products = [];
+                
+                // Detectar diferentes formatos de factura
+                let formatDetected = detectInvoiceFormat(content);
+                
+                for (let line of lines) {
+                    line = line.trim();
+                    if (!line) continue;
+                    
+                    // Buscar líneas que contengan productos con el formato de tu factura
+                    const product = parseProductLine(line);
+                    if (product) {
+                        products.push(product);
+                    }
+                }
+                
+                // Si no se encontraron productos con el formato automático, intentar formato manual
+                if (products.length === 0) {
+                    const manualProducts = parseManualFormat(content);
+                    products.push(...manualProducts);
+                }
+                
+                if (products.length === 0) {
+                    showError('No se encontraron productos en la factura. Verifica que el contenido incluya la información de productos con formato: Código, Nombre, Cantidad, Precio, Descuento.');
+                    document.getElementById('loading').classList.remove('show');
+                    return;
+                }
+                
+                // Procesar datos con redondeo
+                processedData = products.map(product => {
+                    const priceWithDiscount = product.price * (1 - product.discount / 100);
+                    let salePrice20, salePrice30;
+                    
+                    // Aplicar margen según el precio
+                    if (priceWithDiscount < 3000) {
+                        salePrice20 = roundUpToHundred(priceWithDiscount * 1.30); // 30% para productos <$3000
+                        salePrice30 = roundUpToHundred(priceWithDiscount * 1.30); // Mismo precio
+                    } else {
+                        salePrice20 = roundUpToHundred(priceWithDiscount * 1.20); // 20% para productos >=$3000
+                        salePrice30 = roundUpToHundred(priceWithDiscount * 1.30); // 30% alternativo
+                    }
+                    
+                    return {
+                        ...product,
+                        priceWithDiscount,
+                        salePrice20,
+                        salePrice30
+                    };
+                });
+                
+                displayResults();
+                showSuccess(`¡Factura procesada exitosamente! Se encontraron ${products.length} productos. Precios redondeados hacia arriba en múltiplos de $100.`);
+                
+            } catch (error) {
+                showError('Error al analizar la factura: ' + error.message);
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+            }
+        }
+        
+        function detectInvoiceFormat(content) {
+            // Detectar si es el formato de tu factura específica
+            if (content.includes('COMP Nº') && content.includes('AF TECNOCENTER')) {
+                return 'af_tecnocenter';
+            }
+            return 'generic';
+        }
+        
+        function parseManualFormat(content) {
+            // Parsear el formato específico de tu factura
+            const products = [];
+            const lines = content.split('\n');
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                // Buscar líneas que empiecen con código de producto (números)
+                if (/^\d{10}\s+/.test(line)) {
+                    const product = parseSpecificFormat(line);
+                    if (product) {
+                        products.push(product);
+                    }
+                }
+            }
+            
+            return products;
+        }
+        
+        function parseSpecificFormat(line) {
+            // Formato específico: CÓDIGO NOMBRE CANTIDAD PRECIO DESCUENTO TOTAL
+            // Ejemplo: 0000004833 TENSIOMETRO INTELLISENSE 896 30 13,299.00 11.00 355,083.30
+            
+            const parts = line.split(/\s+/);
+            if (parts.length < 7) return null;
+            
+            const code = parts[0];
+            let nameEndIndex = parts.length - 5; // Los últimos 5 elementos son: cantidad, precio, %, descuento, total
+            
+            // Encontrar donde termina el nombre y empiezan los números
+            for (let i = 1; i < parts.length - 4; i++) {
+                if (!isNaN(parts[i]) && !isNaN(parts[i + 1])) {
+                    nameEndIndex = i;
+                    break;
+                }
+            }
+            
+            const name = parts.slice(1, nameEndIndex).join(' ');
+            const quantity = parseInt(parts[nameEndIndex]);
+            const price = parseFloat(parts[nameEndIndex + 1].replace(/,/g, ''));
+            const discount = parseFloat(parts[nameEndIndex + 2]);
+            const total = parseFloat(parts[parts.length - 1].replace(/,/g, ''));
+            
+            if (isNaN(quantity) || isNaN(price) || isNaN(discount)) {
+                return null;
+            }
+            
+            return {
+                code: code,
+                name: name,
+                quantity: quantity,
+                price: price,
+                discount: discount,
+                total: total
+            };
+        }
+
+        function parseProductLine(line) {
+            // Formato específico de AF TECNOCENTER
+            // Ejemplo: 0000004833 TENSIOMETRO INTELLISENSE 896 30 13,299.00 11.00 355,083.30
+            
+            if (!/^\d{10}\s+/.test(line)) {
+                return null; // No es una línea de producto válida
+            }
+            
+            const parts = line.split(/\s+/);
+            if (parts.length < 7) return null;
+            
+            const code = parts[0];
+            
+            // Encontrar donde termina el nombre del producto
+            let nameEndIndex = -1;
+            for (let i = parts.length - 5; i >= 1; i--) {
+                if (isNaN(parts[i])) {
+                    nameEndIndex = i + 1;
+                    break;
+                }
+            }
+            
+            if (nameEndIndex === -1) nameEndIndex = parts.length - 5;
+            
+            const name = parts.slice(1, nameEndIndex).join(' ');
+            const quantity = parseInt(parts[nameEndIndex]);
+            const price = parseFloat(parts[nameEndIndex + 1].replace(/,/g, ''));
+            const discount = parseFloat(parts[nameEndIndex + 2]);
+            const total = parseFloat(parts[parts.length - 1].replace(/,/g, ''));
+            
+            // Validar que los datos sean correctos
+            if (isNaN(quantity) || isNaN(price) || isNaN(discount) || !name.trim()) {
+                return null;
+            }
+            
+            return {
+                code: code,
+                name: name.trim(),
+                quantity: quantity,
+                price: price,
+                discount: discount,
+                total: total
+            };
+        }
+
+        function displayResults() {
+            const tbody = document.getElementById('resultsBody');
+            tbody.innerHTML = '';
+            
+            let totalProducts = 0;
+            let totalValue = 0;
+            let totalWithMargin = 0;
+            
+            processedData.forEach(product => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${product.name}</strong><br><small>Código: ${product.code}</small></td>
+                    <td>${product.quantity}</td>
+                    <td class="price">$${product.price.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                    <td class="discount">${product.discount}%</td>
+                    <td class="price">$${product.priceWithDiscount.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                    <td class="price">$${product.salePrice20.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                    <td class="price">$${product.salePrice30.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                `;
+                tbody.appendChild(row);
+                
+                totalProducts += product.quantity;
+                totalValue += product.priceWithDiscount * product.quantity;
+                totalWithMargin += product.salePrice20 * product.quantity;
+            });
+            
+            // Mostrar resumen
+            const summaryCards = document.getElementById('summaryCards');
+            summaryCards.innerHTML = `
+                <div class="summary-card">
+                    <h3>${processedData.length}</h3>
+                    <p>Productos Únicos</p>
+                </div>
+                <div class="summary-card">
+                    <h3>${totalProducts}</h3>
+                    <p>Cantidad Total</p>
+                </div>
+                <div class="summary-card">
+                    <h3>$${totalValue.toLocaleString('es-AR')}</h3>
+                    <p>Valor Total</p>
+                </div>
+                <div class="summary-card">
+                    <h3>$${totalWithMargin.toLocaleString('es-AR')}</h3>
+                    <p>Con Margen</p>
+                </div>
+            `;
+            
+            document.getElementById('resultsSection').classList.add('show');
+        }
+
+        function exportToExcel() {
+            if (processedData.length === 0) {
+                showError('No hay datos para exportar');
+                return;
+            }
+            
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Producto,Cantidad,Precio Original,Descuento %,Precio con Descuento,Precio Venta (+20%/+30%),Precio Venta (+30%)\n";
+            
+            processedData.forEach(product => {
+                csvContent += `"${product.name}",${product.quantity},${product.price},${product.discount},${product.priceWithDiscount},${product.salePrice20},${product.salePrice30}\n`;
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `AF_TECNOCENTER_Precios_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showSuccess('¡Archivo Excel descargado exitosamente!');
+        }
+
+        function printResults() {
+            if (processedData.length === 0) {
+                showError('No hay datos para imprimir');
+                return;
+            }
+            
+            const printWindow = window.open('', '_blank');
+            const printContent = `
+                <html>
+                <head>
+                    <title>AF TECNOCENTER - Calculadora de Precios</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f2f2f2; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>AF TECNOCENTER</h1>
+                        <h2>Calculadora de Precios</h2>
+                        <p>Fecha: ${new Date().toLocaleDateString('es-AR')}</p>
+                    </div>
+                    ${document.getElementById('resultsSection').innerHTML}
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    </script>
+</body>
+</html>
