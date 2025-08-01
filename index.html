@@ -589,6 +589,7 @@
                 
                 addDebugInfo(`Total de líneas a procesar: ${lines.length}`);
                 
+                // Primero intentar con el parser principal
                 for (let line of lines) {
                     line = line.trim();
                     linesProcessed++;
@@ -599,11 +600,11 @@
                     if (product) {
                         products.push(product);
                         linesWithProducts++;
-                        addDebugInfo(`Producto encontrado en línea ${linesProcessed}: ${product.name} - Cantidad: ${product.quantity} - Precio: $${product.price}`);
+                        addDebugInfo(`Producto encontrado en línea ${linesProcessed}: ${product.name} - Cantidad: ${product.quantity} - Precio: ${product.price}`);
                     }
                 }
                 
-                addDebugInfo(`Líneas procesadas: ${linesProcessed}, Productos encontrados: ${products.length}`);
+                addDebugInfo(`Parser principal - Líneas procesadas: ${linesProcessed}, Productos encontrados: ${products.length}`);
                 
                 // Si no se encontraron productos con el parser principal, intentar parsing alternativo
                 if (products.length === 0) {
@@ -615,7 +616,7 @@
                 
                 if (products.length === 0) {
                     addDebugInfo('Mostrando muestra del contenido para debugging:');
-                    const sampleLines = lines.slice(0, 10).map((line, i) => `${i+1}: ${line}`);
+                    const sampleLines = lines.slice(0, 15).map((line, i) => `${i+1}: ${line}`);
                     addDebugInfo(sampleLines.join('<br>'));
                     
                     showMessage('error', 'No se encontraron productos en la factura. Verifica el formato o usa el modo debug para más información.');
@@ -634,12 +635,12 @@
                         // Para productos menores a $3000, usar 30% de margen
                         salePrice20 = roundUpToHundred(priceWithDiscount * 1.30);
                         salePrice30 = roundUpToHundred(priceWithDiscount * 1.30);
-                        addDebugInfo(`Producto ${index + 1} < $3000: Aplicando 30% de margen`);
+                        addDebugInfo(`Producto ${index + 1} < $3000: ${product.name} - Precio con desc: ${priceWithDiscount.toFixed(2)} - Aplicando 30% de margen`);
                     } else {
                         // Para productos mayores a $3000, usar 20% y 30%
                         salePrice20 = roundUpToHundred(priceWithDiscount * 1.20);
                         salePrice30 = roundUpToHundred(priceWithDiscount * 1.30);
-                        addDebugInfo(`Producto ${index + 1} >= $3000: Aplicando 20% y 30% de margen`);
+                        addDebugInfo(`Producto ${index + 1} >= $3000: ${product.name} - Precio con desc: ${priceWithDiscount.toFixed(2)} - Aplicando 20% y 30% de margen`);
                     }
                     
                     return {
@@ -666,9 +667,9 @@
         function parseProductLine(line) {
             addDebugInfo(`Analizando línea: "${line}"`);
             
-            // Patrón 1: Líneas que empiezan con código de 10 dígitos
+            // Patrón específico para facturas con formato: CODIGO NOMBRE CANTIDAD PRECIO DESCUENTO MONTO
             if (/^\d{10}\s+/.test(line)) {
-                return parseCodeBasedLine(line);
+                return parseInvoiceFormatLine(line);
             }
             
             // Patrón 2: Líneas con formato tabla (números separados por espacios)
@@ -700,6 +701,48 @@
             }
             
             return null;
+        }
+
+        function parseInvoiceFormatLine(line) {
+            // Formato: CODIGO NOMBRE CANTIDAD PRECIO DESCUENTO MONTO
+            // Ejemplo: 0000004833 TENSIOMETRO INTELLISENSE 896 30 13,299.00 11.00 355,083.30
+            
+            const parts = line.split(/\s+/);
+            if (parts.length < 6) {
+                addDebugInfo(`Línea con código insuficiente: ${parts.length} partes`);
+                return null;
+            }
+            
+            const code = parts[0];
+            
+            // Los últimos 4 elementos deberían ser: CANTIDAD, PRECIO, DESCUENTO, MONTO
+            const cantidad = parseInt(parts[parts.length - 4]);
+            const precio = parseFloat(parts[parts.length - 3].replace(/,/g, ''));
+            const descuento = parseFloat(parts[parts.length - 2]);
+            const monto = parseFloat(parts[parts.length - 1].replace(/,/g, ''));
+            
+            // El nombre está en el medio
+            const nombre = parts.slice(1, parts.length - 4).join(' ').trim();
+            
+            // Validaciones
+            if (isNaN(cantidad) || isNaN(precio) || isNaN(descuento) || 
+                cantidad <= 0 || precio <= 0 || descuento < 0 || descuento > 100 ||
+                nombre.length < 2) {
+                
+                addDebugInfo(`Datos inválidos - C:${cantidad} P:${precio} D:${descuento} N:"${nombre}"`);
+                return null;
+            }
+            
+            addDebugInfo(`✓ Producto válido: ${nombre} - Cant:${cantidad} Precio:${precio} Desc:${descuento}%`);
+            
+            return {
+                code: code,
+                name: nombre,
+                quantity: cantidad,
+                price: precio,
+                discount: descuento,
+                total: monto
+            };
         }
 
         function parseCodeBasedLine(line) {
