@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -578,71 +577,33 @@
             }
         }
 
+        
         function parseInvoiceContent(content) {
             try {
                 addDebugInfo('Iniciando análisis del contenido de la factura');
-                
-                const lines = content.split('\n');
-                const products = [];
-                let linesProcessed = 0;
-                let linesWithProducts = 0;
-                
-                addDebugInfo(`Total de líneas a procesar: ${lines.length}`);
-                
-                // Primero intentar con el parser principal
-                for (let line of lines) {
-                    line = line.trim();
-                    linesProcessed++;
-                    
-                    if (!line) continue;
-                    
-                    const product = parseProductLine(line);
-                    if (product) {
-                        products.push(product);
-                        linesWithProducts++;
-                        addDebugInfo(`Producto encontrado en línea ${linesProcessed}: ${product.name} - Cantidad: ${product.quantity} - Precio: ${product.price}`);
-                    }
-                }
-                
-                addDebugInfo(`Parser principal - Líneas procesadas: ${linesProcessed}, Productos encontrados: ${products.length}`);
-                
-                // Si no se encontraron productos con el parser principal, intentar parsing alternativo
+
+                // Usamos la nueva función basada en regex para extraer productos
+                const products = extractProductsFromBlock(content);
                 if (products.length === 0) {
-                    addDebugInfo('No se encontraron productos con el parser principal. Intentando parsing alternativo...');
-                    const alternativeProducts = parseAlternativeFormats(content);
-                    products.push(...alternativeProducts);
-                    addDebugInfo(`Productos encontrados con parser alternativo: ${alternativeProducts.length}`);
-                }
-                
-                if (products.length === 0) {
-                    addDebugInfo('Mostrando muestra del contenido para debugging:');
-                    const sampleLines = lines.slice(0, 15).map((line, i) => `${i+1}: ${line}`);
-                    addDebugInfo(sampleLines.join('<br>'));
-                    
-                    showMessage('error', 'No se encontraron productos en la factura. Verifica el formato o usa el modo debug para más información.');
-                    document.getElementById('loading').classList.add('hidden');
+                    showMessage('error', 'No se encontraron productos en la factura.');
+                    addDebugInfo('No se encontraron productos con regex');
                     return;
                 }
-                
-                addDebugInfo(`Procesando ${products.length} productos para cálculo de precios`);
-                
+
+                addDebugInfo(`Productos detectados con expresión regular: ${products.length}`);
+
                 processedData = products.map((product, index) => {
                     const priceWithDiscount = product.price * (1 - (product.discount || 0) / 100);
                     let salePrice20, salePrice30;
-                    
-                    // Aplicar lógica de márgenes según el requerimiento
+
                     if (priceWithDiscount < 3000) {
-                        // Para productos menores a $3000, usar 30% de margen
                         salePrice20 = roundUpToHundred(priceWithDiscount * 1.30);
                         salePrice30 = roundUpToHundred(priceWithDiscount * 1.30);
-                        addDebugInfo(`Producto ${index + 1} < $3000: ${product.name} - Precio con desc: ${priceWithDiscount.toFixed(2)} - Aplicando 30% de margen`);
                     } else {
-                        // Para productos mayores a $3000, usar 20% y 30%
                         salePrice20 = roundUpToHundred(priceWithDiscount * 1.20);
                         salePrice30 = roundUpToHundred(priceWithDiscount * 1.30);
-                        addDebugInfo(`Producto ${index + 1} >= $3000: ${product.name} - Precio con desc: ${priceWithDiscount.toFixed(2)} - Aplicando 20% y 30% de margen`);
                     }
-                    
+
                     return {
                         ...product,
                         priceWithDiscount,
@@ -650,11 +611,11 @@
                         salePrice30
                     };
                 });
-                
+
                 displayResults();
-                showMessage('success', `¡Factura procesada exitosamente! Se encontraron ${products.length} productos`);
-                addDebugInfo(`Procesamiento completado exitosamente`);
-                
+                showMessage('success', `¡Factura procesada exitosamente! Se encontraron ${products.length} productos.`);
+                addDebugInfo('Procesamiento completado exitosamente');
+
             } catch (error) {
                 console.error('Error en parseInvoiceContent:', error);
                 showMessage('error', 'Error al analizar la factura: ' + error.message);
@@ -664,139 +625,31 @@
             }
         }
 
-        function parseProductLine(line) {
-            addDebugInfo(`Analizando línea: "${line}"`);
-            
-            // Patrón específico para facturas con formato: CODIGO NOMBRE CANTIDAD PRECIO DESCUENTO MONTO
-            if (/^\d{10}\s+/.test(line)) {
-                return parseInvoiceFormatLine(line);
-            }
-            
-            // Patrón 2: Líneas con formato tabla (números separados por espacios)
-            const parts = line.split(/\s+/);
-            if (parts.length >= 4) {
-                // Buscar patrones de números que podrían ser cantidad, precio, descuento
-                for (let i = 0; i < parts.length - 3; i++) {
-                    const quantity = parseFloat(parts[i]);
-                    const price = parseFloat(parts[i + 1].replace(/,/g, ''));
-                    const discount = parseFloat(parts[i + 2]);
-                    
-                    if (!isNaN(quantity) && !isNaN(price) && !isNaN(discount) && 
-                        quantity > 0 && price > 0 && discount >= 0 && discount <= 100) {
-                        
-                        const name = parts.slice(0, i).join(' ').trim();
-                        if (name.length > 2) {
-                            addDebugInfo(`Producto encontrado con patrón tabla: ${name}`);
-                            return {
-                                code: 'AUTO-' + Date.now(),
-                                name: name,
-                                quantity: Math.round(quantity),
-                                price: price,
-                                discount: discount,
-                                total: price * quantity
-                            };
-                        }
-                    }
+        function extractProductsFromBlock(text) {
+            const productRegex = /(\d{10})\s+(.+?)\s+(\d+)\s+(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s+(\d{1,3}(?:\.\d{2})?)\s+(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/g;
+            const products = [];
+            let match;
+
+            while ((match = productRegex.exec(text)) !== null) {
+                const [_, code, name, quantity, priceStr, discountStr, totalStr] = match;
+                const product = {
+                    code,
+                    name: name.trim(),
+                    quantity: parseInt(quantity),
+                    price: parseFloat(priceStr.replace(/,/g, '')),
+                    discount: parseFloat(discountStr),
+                    total: parseFloat(totalStr.replace(/,/g, ''))
+                };
+
+                if (!isNaN(product.quantity) && !isNaN(product.price)) {
+                    products.push(product);
+                    addDebugInfo(`✓ Producto regex: ${product.name} - Cant: ${product.quantity} - Precio: ${product.price}`);
                 }
             }
-            
-            return null;
+
+            return products;
         }
 
-        function parseInvoiceFormatLine(line) {
-            // Formato: CODIGO NOMBRE CANTIDAD PRECIO DESCUENTO MONTO
-            // Ejemplo: 0000004833 TENSIOMETRO INTELLISENSE 896 30 13,299.00 11.00 355,083.30
-            
-            const parts = line.split(/\s+/);
-            if (parts.length < 6) {
-                addDebugInfo(`Línea con código insuficiente: ${parts.length} partes`);
-                return null;
-            }
-            
-            const code = parts[0];
-            
-            // Los últimos 4 elementos deberían ser: CANTIDAD, PRECIO, DESCUENTO, MONTO
-            const cantidad = parseInt(parts[parts.length - 4]);
-            const precio = parseFloat(parts[parts.length - 3].replace(/,/g, ''));
-            const descuento = parseFloat(parts[parts.length - 2]);
-            const monto = parseFloat(parts[parts.length - 1].replace(/,/g, ''));
-            
-            // El nombre está en el medio
-            const nombre = parts.slice(1, parts.length - 4).join(' ').trim();
-            
-            // Validaciones
-            if (isNaN(cantidad) || isNaN(precio) || isNaN(descuento) || 
-                cantidad <= 0 || precio <= 0 || descuento < 0 || descuento > 100 ||
-                nombre.length < 2) {
-                
-                addDebugInfo(`Datos inválidos - C:${cantidad} P:${precio} D:${descuento} N:"${nombre}"`);
-                return null;
-            }
-            
-            addDebugInfo(`✓ Producto válido: ${nombre} - Cant:${cantidad} Precio:${precio} Desc:${descuento}%`);
-            
-            return {
-                code: code,
-                name: nombre,
-                quantity: cantidad,
-                price: precio,
-                discount: descuento,
-                total: monto
-            };
-        }
-
-        function parseCodeBasedLine(line) {
-            const parts = line.split(/\s+/);
-            if (parts.length < 5) return null;
-            
-            const code = parts[0];
-            
-            // Buscar donde terminan las palabras del nombre y empiezan los números
-            let nameEndIndex = -1;
-            for (let i = parts.length - 1; i >= 1; i--) {
-                const part = parts[i].replace(/,/g, '');
-                if (!isNaN(parseFloat(part))) {
-                    continue; // Es un número, seguir buscando
-                } else {
-                    nameEndIndex = i + 1;
-                    break;
-                }
-            }
-            
-            if (nameEndIndex === -1 || nameEndIndex >= parts.length - 2) {
-                addDebugInfo(`No se pudo determinar estructura de línea con código: "${line}"`);
-                return null;
-            }
-            
-            const name = parts.slice(1, nameEndIndex).join(' ').trim();
-            const numericParts = parts.slice(nameEndIndex);
-            
-            if (numericParts.length < 3) {
-                addDebugInfo(`Insuficientes datos numéricos en línea: "${line}"`);
-                return null;
-            }
-            
-            const quantity = parseInt(numericParts[0]);
-            const price = parseFloat(numericParts[1].replace(/,/g, ''));
-            const discount = parseFloat(numericParts[2]);
-            
-            if (isNaN(quantity) || isNaN(price) || isNaN(discount) || 
-                quantity <= 0 || price <= 0 || discount < 0 || discount > 100) {
-                addDebugInfo(`Datos numéricos inválidos: Q=${quantity}, P=${price}, D=${discount}`);
-                return null;
-            }
-            
-            addDebugInfo(`Producto parseado con código: ${name} - Q:${quantity} P:${price} D:${discount}`);
-            
-            return {
-                code: code,
-                name: name,
-                quantity: quantity,
-                price: price,
-                discount: discount,
-                total: price * quantity * (1 - discount / 100)
-            };
-        }
 
         function parseAlternativeFormats(content) {
             const products = [];
