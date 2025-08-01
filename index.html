@@ -215,6 +215,12 @@
             color: #fca5a5;
         }
 
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #fbbf24;
+        }
+
         @keyframes slideIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -231,6 +237,18 @@
 
         .hidden { display: none; }
         .show { display: block; }
+
+        .debug-info {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 16px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
 
         @media (max-width: 768px) {
             .upload-area { padding: 2rem 1rem; }
@@ -306,6 +324,20 @@
                     <input type="file" id="invoiceFile" style="display: none;" accept=".pdf,.txt,.jpg,.jpeg,.png,.doc,.docx" onchange="processInvoice(this.files[0])">
                 </div>
 
+                <!-- Debug Toggle -->
+                <div class="mb-4">
+                    <button class="btn-secondary" onclick="toggleDebug()">
+                        <i data-lucide="bug" class="w-4 h-4 mr-2"></i>
+                        <span id="debugToggleText">Mostrar Debug</span>
+                    </button>
+                </div>
+
+                <!-- Debug Info -->
+                <div id="debugInfo" class="debug-info hidden">
+                    <strong>Información de Debug:</strong><br>
+                    <div id="debugContent"></div>
+                </div>
+
                 <!-- Loading -->
                 <div id="loading" class="hidden text-center py-8">
                     <div class="loading-spinner"></div>
@@ -337,10 +369,10 @@
                                     <th>Producto</th>
                                     <th>Cantidad</th>
                                     <th>Precio Original</th>
-                                    <th>Descuento</th>
+                                    <th>Descuento (%)</th>
                                     <th>Precio con Descuento</th>
-                                    <th>Precio Venta (Redondeado)</th>
-                                    <th>Precio Venta +30%</th>
+                                    <th>Precio Venta (+20%)</th>
+                                    <th>Precio Venta (+30%)</th>
                                 </tr>
                             </thead>
                             <tbody id="resultsBody"></tbody>
@@ -390,6 +422,8 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         
         let processedData = [];
+        let debugMode = false;
+        let debugData = [];
 
         function showTool(toolId) {
             // Hide all tools
@@ -410,10 +444,32 @@
             event.target.classList.add('active');
         }
 
+        function toggleDebug() {
+            debugMode = !debugMode;
+            const debugInfo = document.getElementById('debugInfo');
+            const toggleText = document.getElementById('debugToggleText');
+            
+            if (debugMode) {
+                debugInfo.classList.remove('hidden');
+                toggleText.textContent = 'Ocultar Debug';
+            } else {
+                debugInfo.classList.add('hidden');
+                toggleText.textContent = 'Mostrar Debug';
+            }
+        }
+
+        function addDebugInfo(message) {
+            debugData.push(`[${new Date().toLocaleTimeString()}] ${message}`);
+            if (debugMode) {
+                const debugContent = document.getElementById('debugContent');
+                debugContent.innerHTML = debugData.slice(-20).join('<br>');
+            }
+        }
+
         function showMessage(type, text) {
             const container = document.getElementById('messageContainer');
-            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
-            const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+            const alertClass = type === 'success' ? 'alert-success' : type === 'warning' ? 'alert-warning' : 'alert-error';
+            const icon = type === 'success' ? 'check-circle' : type === 'warning' ? 'alert-triangle' : 'alert-circle';
             
             container.innerHTML = `
                 <div class="alert ${alertClass}">
@@ -428,7 +484,7 @@
             
             setTimeout(() => {
                 container.innerHTML = '';
-            }, 5000);
+            }, 7000);
         }
 
         // Drag and drop functionality
@@ -459,6 +515,9 @@
         function processInvoice(file) {
             if (!file) return;
             
+            debugData = []; // Limpiar debug data
+            addDebugInfo(`Iniciando procesamiento de archivo: ${file.name} (${file.type})`);
+            
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('resultsSection').classList.add('hidden');
             
@@ -475,6 +534,7 @@
                     parseInvoiceContent(content);
                 } catch (error) {
                     showMessage('error', 'Error al procesar el archivo: ' + error.message);
+                    addDebugInfo(`Error procesando archivo: ${error.message}`);
                     document.getElementById('loading').classList.add('hidden');
                 }
             };
@@ -485,9 +545,12 @@
         async function processPDFFile(file) {
             try {
                 showMessage('success', 'Procesando PDF... Esto puede tomar unos segundos.');
+                addDebugInfo('Iniciando extracción de texto del PDF');
                 
                 const arrayBuffer = await file.arrayBuffer();
                 const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                
+                addDebugInfo(`PDF cargado exitosamente. Páginas: ${pdf.numPages}`);
                 
                 let fullText = '';
                 
@@ -496,7 +559,10 @@
                     const textContent = await page.getTextContent();
                     const pageText = textContent.items.map(item => item.str).join(' ');
                     fullText += pageText + '\n';
+                    addDebugInfo(`Página ${pageNum} procesada: ${pageText.length} caracteres extraídos`);
                 }
+                
+                addDebugInfo(`Texto total extraído: ${fullText.length} caracteres`);
                 
                 if (!fullText.trim()) {
                     throw new Error('No se pudo extraer texto del PDF.');
@@ -507,46 +573,73 @@
             } catch (error) {
                 console.error('Error procesando PDF:', error);
                 showMessage('error', 'Error al procesar el PDF: ' + error.message);
+                addDebugInfo(`Error procesando PDF: ${error.message}`);
                 document.getElementById('loading').classList.add('hidden');
             }
         }
 
         function parseInvoiceContent(content) {
             try {
+                addDebugInfo('Iniciando análisis del contenido de la factura');
+                
                 const lines = content.split('\n');
                 const products = [];
+                let linesProcessed = 0;
+                let linesWithProducts = 0;
+                
+                addDebugInfo(`Total de líneas a procesar: ${lines.length}`);
                 
                 for (let line of lines) {
                     line = line.trim();
+                    linesProcessed++;
+                    
                     if (!line) continue;
                     
                     const product = parseProductLine(line);
                     if (product) {
                         products.push(product);
+                        linesWithProducts++;
+                        addDebugInfo(`Producto encontrado en línea ${linesProcessed}: ${product.name} - Cantidad: ${product.quantity} - Precio: $${product.price}`);
                     }
                 }
                 
+                addDebugInfo(`Líneas procesadas: ${linesProcessed}, Productos encontrados: ${products.length}`);
+                
+                // Si no se encontraron productos con el parser principal, intentar parsing alternativo
                 if (products.length === 0) {
-                    const manualProducts = parseManualFormat(content);
-                    products.push(...manualProducts);
+                    addDebugInfo('No se encontraron productos con el parser principal. Intentando parsing alternativo...');
+                    const alternativeProducts = parseAlternativeFormats(content);
+                    products.push(...alternativeProducts);
+                    addDebugInfo(`Productos encontrados con parser alternativo: ${alternativeProducts.length}`);
                 }
                 
                 if (products.length === 0) {
-                    showMessage('error', 'No se encontraron productos en la factura. Verifica que el contenido incluya códigos de producto, nombres, cantidades y precios.');
+                    addDebugInfo('Mostrando muestra del contenido para debugging:');
+                    const sampleLines = lines.slice(0, 10).map((line, i) => `${i+1}: ${line}`);
+                    addDebugInfo(sampleLines.join('<br>'));
+                    
+                    showMessage('error', 'No se encontraron productos en la factura. Verifica el formato o usa el modo debug para más información.');
                     document.getElementById('loading').classList.add('hidden');
                     return;
                 }
                 
-                processedData = products.map(product => {
-                    const priceWithDiscount = product.price * (1 - product.discount / 100);
+                addDebugInfo(`Procesando ${products.length} productos para cálculo de precios`);
+                
+                processedData = products.map((product, index) => {
+                    const priceWithDiscount = product.price * (1 - (product.discount || 0) / 100);
                     let salePrice20, salePrice30;
                     
+                    // Aplicar lógica de márgenes según el requerimiento
                     if (priceWithDiscount < 3000) {
+                        // Para productos menores a $3000, usar 30% de margen
                         salePrice20 = roundUpToHundred(priceWithDiscount * 1.30);
                         salePrice30 = roundUpToHundred(priceWithDiscount * 1.30);
+                        addDebugInfo(`Producto ${index + 1} < $3000: Aplicando 30% de margen`);
                     } else {
+                        // Para productos mayores a $3000, usar 20% y 30%
                         salePrice20 = roundUpToHundred(priceWithDiscount * 1.20);
                         salePrice30 = roundUpToHundred(priceWithDiscount * 1.30);
+                        addDebugInfo(`Producto ${index + 1} >= $3000: Aplicando 20% y 30% de margen`);
                     }
                     
                     return {
@@ -559,93 +652,201 @@
                 
                 displayResults();
                 showMessage('success', `¡Factura procesada exitosamente! Se encontraron ${products.length} productos`);
+                addDebugInfo(`Procesamiento completado exitosamente`);
                 
             } catch (error) {
                 console.error('Error en parseInvoiceContent:', error);
                 showMessage('error', 'Error al analizar la factura: ' + error.message);
+                addDebugInfo(`Error en parseInvoiceContent: ${error.message}`);
             } finally {
                 document.getElementById('loading').classList.add('hidden');
             }
         }
 
-        function parseManualFormat(content) {
-            const products = [];
-            const lines = content.split('\n');
+        function parseProductLine(line) {
+            addDebugInfo(`Analizando línea: "${line}"`);
             
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (/^\d{10}\s+/.test(line)) {
-                    const product = parseSpecificFormat(line);
-                    if (product) {
-                        const exists = products.some(p => p.code === product.code);
-                        if (!exists) {
-                            products.push(product);
+            // Patrón 1: Líneas que empiezan con código de 10 dígitos
+            if (/^\d{10}\s+/.test(line)) {
+                return parseCodeBasedLine(line);
+            }
+            
+            // Patrón 2: Líneas con formato tabla (números separados por espacios)
+            const parts = line.split(/\s+/);
+            if (parts.length >= 4) {
+                // Buscar patrones de números que podrían ser cantidad, precio, descuento
+                for (let i = 0; i < parts.length - 3; i++) {
+                    const quantity = parseFloat(parts[i]);
+                    const price = parseFloat(parts[i + 1].replace(/,/g, ''));
+                    const discount = parseFloat(parts[i + 2]);
+                    
+                    if (!isNaN(quantity) && !isNaN(price) && !isNaN(discount) && 
+                        quantity > 0 && price > 0 && discount >= 0 && discount <= 100) {
+                        
+                        const name = parts.slice(0, i).join(' ').trim();
+                        if (name.length > 2) {
+                            addDebugInfo(`Producto encontrado con patrón tabla: ${name}`);
+                            return {
+                                code: 'AUTO-' + Date.now(),
+                                name: name,
+                                quantity: Math.round(quantity),
+                                price: price,
+                                discount: discount,
+                                total: price * quantity
+                            };
                         }
                     }
                 }
             }
             
-            return products;
-        }
-        
-        function parseSpecificFormat(line) {
-            const parts = line.split(/\s+/);
-            if (parts.length < 7) return null;
-            
-            const code = parts[0];
-            let nameEndIndex = parts.length - 5;
-            
-            for (let i = 1; i < parts.length - 4; i++) {
-                if (!isNaN(parts[i]) && !isNaN(parts[i + 1])) {
-                    nameEndIndex = i;
-                    break;
-                }
-            }
-            
-            const name = parts.slice(1, nameEndIndex).join(' ');
-            const quantity = parseInt(parts[nameEndIndex]);
-            const price = parseFloat(parts[nameEndIndex + 1].replace(/,/g, ''));
-            const discount = parseFloat(parts[nameEndIndex + 2]);
-            const total = parseFloat(parts[parts.length - 1].replace(/,/g, ''));
-            
-            if (isNaN(quantity) || isNaN(price) || isNaN(discount)) {
-                return null;
-            }
-            
-            return { code, name, quantity, price, discount, total };
+            return null;
         }
 
-        function parseProductLine(line) {
-            if (!/^\d{10}\s+/.test(line)) {
-                return null;
-            }
-            
+        function parseCodeBasedLine(line) {
             const parts = line.split(/\s+/);
-            if (parts.length < 7) return null;
+            if (parts.length < 5) return null;
             
             const code = parts[0];
-            let nameEndIndex = -1;
             
-            for (let i = parts.length - 5; i >= 1; i--) {
-                if (isNaN(parts[i])) {
+            // Buscar donde terminan las palabras del nombre y empiezan los números
+            let nameEndIndex = -1;
+            for (let i = parts.length - 1; i >= 1; i--) {
+                const part = parts[i].replace(/,/g, '');
+                if (!isNaN(parseFloat(part))) {
+                    continue; // Es un número, seguir buscando
+                } else {
                     nameEndIndex = i + 1;
                     break;
                 }
             }
             
-            if (nameEndIndex === -1) nameEndIndex = parts.length - 5;
-            
-            const name = parts.slice(1, nameEndIndex).join(' ');
-            const quantity = parseInt(parts[nameEndIndex]);
-            const price = parseFloat(parts[nameEndIndex + 1].replace(/,/g, ''));
-            const discount = parseFloat(parts[nameEndIndex + 2]);
-            const total = parseFloat(parts[parts.length - 1].replace(/,/g, ''));
-            
-            if (isNaN(quantity) || isNaN(price) || isNaN(discount) || !name.trim()) {
+            if (nameEndIndex === -1 || nameEndIndex >= parts.length - 2) {
+                addDebugInfo(`No se pudo determinar estructura de línea con código: "${line}"`);
                 return null;
             }
             
-            return { code: code, name: name.trim(), quantity, price, discount, total };
+            const name = parts.slice(1, nameEndIndex).join(' ').trim();
+            const numericParts = parts.slice(nameEndIndex);
+            
+            if (numericParts.length < 3) {
+                addDebugInfo(`Insuficientes datos numéricos en línea: "${line}"`);
+                return null;
+            }
+            
+            const quantity = parseInt(numericParts[0]);
+            const price = parseFloat(numericParts[1].replace(/,/g, ''));
+            const discount = parseFloat(numericParts[2]);
+            
+            if (isNaN(quantity) || isNaN(price) || isNaN(discount) || 
+                quantity <= 0 || price <= 0 || discount < 0 || discount > 100) {
+                addDebugInfo(`Datos numéricos inválidos: Q=${quantity}, P=${price}, D=${discount}`);
+                return null;
+            }
+            
+            addDebugInfo(`Producto parseado con código: ${name} - Q:${quantity} P:${price} D:${discount}`);
+            
+            return {
+                code: code,
+                name: name,
+                quantity: quantity,
+                price: price,
+                discount: discount,
+                total: price * quantity * (1 - discount / 100)
+            };
+        }
+
+        function parseAlternativeFormats(content) {
+            const products = [];
+            const lines = content.split('\n');
+            
+            addDebugInfo('Intentando parsing alternativo...');
+            
+            // Patrón alternativo 1: Buscar líneas que contengan números que parezcan precios
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                // Buscar patrones como: "PRODUCTO 5 1250.00 10 1125.00"
+                const pricePattern = /(\d+(?:,\d{3})*(?:\.\d{2})?)/g;
+                const prices = line.match(pricePattern);
+                
+                if (prices && prices.length >= 3) {
+                    const words = line.split(/\s+/);
+                    const nonNumericWords = words.filter(word => 
+                        isNaN(parseFloat(word.replace(/,/g, ''))) && 
+                        word.length > 1
+                    );
+                    
+                    if (nonNumericWords.length > 0) {
+                        const name = nonNumericWords.join(' ');
+                        const numbers = prices.map(p => parseFloat(p.replace(/,/g, '')));
+                        
+                        // Asumir: primer número = cantidad, segundo = precio, tercero = descuento o precio final
+                        if (numbers.length >= 2) {
+                            const quantity = Math.round(numbers[0]) || 1;
+                            const price = numbers[1];
+                            const discount = numbers.length >= 3 ? 
+                                (numbers[2] < numbers[1] ? ((numbers[1] - numbers[2]) / numbers[1] * 100) : numbers[2]) : 0;
+                            
+                            if (price > 10 && name.length > 3) { // Filtros básicos
+                                products.push({
+                                    code: 'ALT-' + (i + 1),
+                                    name: name,
+                                    quantity: quantity,
+                                    price: price,
+                                    discount: Math.min(discount, 100),
+                                    total: price * quantity
+                                });
+                                
+                                addDebugInfo(`Producto alternativo encontrado: ${name} - ${price}`);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Patrón alternativo 2: Líneas con formato específico de facturas
+            const facturaRegex = /^(.+?)\s+(\d+)\s+(\d+(?:,\d{3})*(?:\.\d{2})?)\s+(\d+(?:\.\d{2})?)\s*$/;
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                const match = line.match(facturaRegex);
+                
+                if (match) {
+                    const [, name, quantity, price, discount] = match;
+                    const parsedPrice = parseFloat(price.replace(/,/g, ''));
+                    const parsedDiscount = parseFloat(discount);
+                    const parsedQuantity = parseInt(quantity);
+                    
+                    if (parsedPrice > 0 && parsedQuantity > 0 && name.length > 2) {
+                        products.push({
+                            code: 'FACT-' + (i + 1),
+                            name: name.trim(),
+                            quantity: parsedQuantity,
+                            price: parsedPrice,
+                            discount: parsedDiscount <= 100 ? parsedDiscount : 0,
+                            total: parsedPrice * parsedQuantity
+                        });
+                        
+                        addDebugInfo(`Producto regex encontrado: ${name.trim()} - ${parsedPrice}`);
+                    }
+                }
+            }
+            
+            // Eliminar duplicados basados en nombre similar
+            const uniqueProducts = [];
+            for (const product of products) {
+                const isDuplicate = uniqueProducts.some(existing => 
+                    existing.name.toLowerCase() === product.name.toLowerCase() ||
+                    Math.abs(existing.price - product.price) < 0.01
+                );
+                
+                if (!isDuplicate) {
+                    uniqueProducts.push(product);
+                }
+            }
+            
+            addDebugInfo(`Productos únicos encontrados con parsing alternativo: ${uniqueProducts.length}`);
+            return uniqueProducts;
         }
 
         function displayResults() {
@@ -656,7 +857,7 @@
             let totalValue = 0;
             let totalWithMargin = 0;
             
-            processedData.forEach(product => {
+            processedData.forEach((product, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>
@@ -664,17 +865,19 @@
                         <div class="text-sm text-slate-400">Código: ${product.code}</div>
                     </td>
                     <td class="text-white">${product.quantity}</td>
-                    <td class="text-emerald-400 font-semibold">$${product.price.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
-                    <td class="text-red-400">${product.discount}%</td>
-                    <td class="text-emerald-400 font-semibold">$${product.priceWithDiscount.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
-                    <td class="text-emerald-400 font-semibold">$${product.salePrice20.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
-                    <td class="text-emerald-400 font-semibold">$${product.salePrice30.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                    <td class="text-emerald-400 font-semibold">${product.price.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                    <td class="text-red-400">${product.discount || 0}%</td>
+                    <td class="text-emerald-400 font-semibold">${product.priceWithDiscount.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                    <td class="text-emerald-400 font-semibold">${product.salePrice20.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                    <td class="text-emerald-400 font-semibold">${product.salePrice30.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
                 `;
                 tbody.appendChild(row);
                 
                 totalProducts += product.quantity;
                 totalValue += product.priceWithDiscount * product.quantity;
                 totalWithMargin += product.salePrice20 * product.quantity;
+                
+                addDebugInfo(`Fila ${index + 1} agregada: ${product.name} - Precio con desc: ${product.priceWithDiscount.toFixed(2)}`);
             });
             
             // Show summary
@@ -689,17 +892,19 @@
                     <div class="text-emerald-300">Cantidad Total</div>
                 </div>
                 <div class="summary-card">
-                    <div class="text-3xl font-bold text-white mb-2">$${totalValue.toLocaleString('es-AR')}</div>
+                    <div class="text-3xl font-bold text-white mb-2">${totalValue.toLocaleString('es-AR')}</div>
                     <div class="text-emerald-300">Valor Total</div>
                 </div>
                 <div class="summary-card">
-                    <div class="text-3xl font-bold text-white mb-2">$${totalWithMargin.toLocaleString('es-AR')}</div>
+                    <div class="text-3xl font-bold text-white mb-2">${totalWithMargin.toLocaleString('es-AR')}</div>
                     <div class="text-emerald-300">Con Margen</div>
                 </div>
             `;
             
             document.getElementById('resultsSection').classList.remove('hidden');
             document.getElementById('resultsSection').classList.add('fade-in');
+            
+            addDebugInfo(`Resultados mostrados exitosamente`);
         }
 
         function exportToExcel() {
@@ -709,10 +914,10 @@
             }
             
             let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Producto,Cantidad,Precio Original,Descuento %,Precio con Descuento,Precio Venta (+20%/+30%),Precio Venta (+30%)\n";
+            csvContent += "Codigo,Producto,Cantidad,Precio Original,Descuento %,Precio con Descuento,Precio Venta (+20%),Precio Venta (+30%)\n";
             
             processedData.forEach(product => {
-                csvContent += `"${product.name}",${product.quantity},${product.price},${product.discount},${product.priceWithDiscount},${product.salePrice20},${product.salePrice30}\n`;
+                csvContent += `"${product.code}","${product.name}",${product.quantity},${product.price},${product.discount || 0},${product.priceWithDiscount.toFixed(2)},${product.salePrice20},${product.salePrice30}\n`;
             });
             
             const encodedUri = encodeURI(csvContent);
@@ -724,6 +929,7 @@
             document.body.removeChild(link);
             
             showMessage('success', '¡Archivo Excel descargado exitosamente!');
+            addDebugInfo('Archivo CSV exportado');
         }
 
         function printResults() {
@@ -733,6 +939,22 @@
             }
             
             const printWindow = window.open('', '_blank');
+            let tableContent = '';
+            
+            processedData.forEach(product => {
+                tableContent += `
+                    <tr>
+                        <td>${product.name}<br><small>Código: ${product.code}</small></td>
+                        <td>${product.quantity}</td>
+                        <td>${product.price.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                        <td>${product.discount || 0}%</td>
+                        <td>${product.priceWithDiscount.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                        <td>${product.salePrice20.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                        <td>${product.salePrice30.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                    </tr>
+                `;
+            });
+            
             const printContent = `
                 <html>
                 <head>
@@ -740,9 +962,10 @@
                     <style>
                         body { font-family: Arial, sans-serif; margin: 20px; }
                         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
                         th { background-color: #10b981; color: white; }
                         .header { text-align: center; margin-bottom: 30px; }
+                        small { color: #666; }
                     </style>
                 </head>
                 <body>
@@ -750,8 +973,24 @@
                         <h1>AF TECNOCENTER</h1>
                         <h2>Calculadora de Precios</h2>
                         <p>Fecha: ${new Date().toLocaleDateString('es-AR')}</p>
+                        <p>Total de productos: ${processedData.length}</p>
                     </div>
-                    ${document.getElementById('resultsSection').innerHTML}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Precio Original</th>
+                                <th>Descuento (%)</th>
+                                <th>Precio con Descuento</th>
+                                <th>Precio Venta (+20%)</th>
+                                <th>Precio Venta (+30%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableContent}
+                        </tbody>
+                    </table>
                 </body>
                 </html>
             `;
@@ -759,6 +998,8 @@
             printWindow.document.write(printContent);
             printWindow.document.close();
             printWindow.print();
+            
+            addDebugInfo('Documento enviado a impresión');
         }
     </script>
 </body>
